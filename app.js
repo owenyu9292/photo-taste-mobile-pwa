@@ -73,9 +73,17 @@ function activeItem() {
 
 function parseTags(text) {
   return String(text || "")
-    .split(/[,\n\r\t]+/g)
+    .split(/[,，、.\u3002;；/／|·•\n\r\t]+/g)
     .map((tag) => tag.trim())
     .filter(Boolean);
+}
+
+function tagPreview(tags, max = 4) {
+  const list = (tags || []).filter(Boolean);
+  if (!list.length) return "없음";
+  const visible = list.slice(0, max).join(", ");
+  const hidden = list.length - max;
+  return hidden > 0 ? `${visible} 외 ${hidden}개` : visible;
 }
 
 async function hashFile(file) {
@@ -193,7 +201,8 @@ function render() {
         <img class="thumb" src="${esc(entry.preview || "")}" alt="">
         <div>
           <div>${esc(shortName(entry.image_name))}</div>
-          <div class="sub">${esc(SOURCE_TYPES[entry.source_type] || SOURCE_TYPES.unknown)} · ${esc(TASTES[entry.taste] || "미선택")} · 느낌 ${(entry.user_tags || []).length}개</div>
+          <div class="sub">출처: ${esc(SOURCE_TYPES[entry.source_type] || SOURCE_TYPES.unknown)} · 판정: ${esc(TASTES[entry.taste] || "미선택")}</div>
+          <div class="sub">느낌: ${esc(tagPreview(entry.user_tags || []))}</div>
         </div>
       </div>`).join("")
     : `<div class="sub">선택한 이미지가 없어요.</div>`;
