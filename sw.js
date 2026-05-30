@@ -1,9 +1,9 @@
-const CACHE_NAME = "photo-taste-mobile-v1";
+const CACHE_NAME = "photo-taste-mobile-v2";
 const BASE = new URL("./", self.location).pathname;
 const APP_SHELL = [
   "index.html",
-  "styles.css?v=1",
-  "app.js?v=1",
+  "styles.css?v=2",
+  "app.js?v=2",
   "manifest.webmanifest",
   "icon.svg"
 ].map((path) => new URL(path, self.location).toString());
@@ -28,4 +28,3 @@ self.addEventListener("fetch", (event) => {
     fetch(event.request).catch(() => caches.match(event.request).then((cached) => cached || caches.match(new URL("index.html", self.location).toString())))
   );
 });
-

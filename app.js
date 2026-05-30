@@ -13,7 +13,6 @@ const TASTES = {
   later: "다시보기"
 };
 
-const REASONS = ["얼굴", "분위기", "빛", "구도", "색감", "의상", "배경", "몸선", "표정", "전체 느낌", "프롬프트 후보"];
 const STORE_KEY = "photo-taste-mobile-review-v1";
 
 const state = {
@@ -32,7 +31,6 @@ const els = {
   activeTitle: document.getElementById("activeTitle"),
   sourceChips: document.getElementById("sourceChips"),
   tasteChips: document.getElementById("tasteChips"),
-  reasonChips: document.getElementById("reasonChips"),
   tagInput: document.getElementById("tagInput"),
   noteInput: document.getElementById("noteInput"),
   queue: document.getElementById("queue")
@@ -155,25 +153,6 @@ function renderChipGroup(root, values, selected, onClick, good = false) {
   });
 }
 
-function renderReasonChips(item) {
-  els.reasonChips.innerHTML = REASONS.map((reason) => (
-    `<button class="${item?.reason_tags?.includes(reason) ? "good" : ""}" data-reason="${esc(reason)}" type="button">${esc(reason)}</button>`
-  )).join("");
-  els.reasonChips.querySelectorAll("[data-reason]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const active = activeItem();
-      if (!active) return;
-      const set = new Set(active.reason_tags || []);
-      if (set.has(button.dataset.reason)) set.delete(button.dataset.reason);
-      else set.add(button.dataset.reason);
-      active.reason_tags = [...set];
-      active.reviewed_at = new Date().toISOString();
-      saveStore();
-      render();
-    });
-  });
-}
-
 function render() {
   const item = activeItem();
   els.status.textContent = `${state.items.length}장`;
@@ -207,7 +186,6 @@ function render() {
     saveStore();
     render();
   }, true);
-  renderReasonChips(item);
 
   els.queue.innerHTML = state.items.length
     ? state.items.map((entry) => `
@@ -215,7 +193,7 @@ function render() {
         <img class="thumb" src="${esc(entry.preview || "")}" alt="">
         <div>
           <div>${esc(shortName(entry.image_name))}</div>
-          <div class="sub">${esc(SOURCE_TYPES[entry.source_type] || SOURCE_TYPES.unknown)} · ${esc(TASTES[entry.taste] || "미선택")} · ${(entry.user_tags || []).length} tags</div>
+          <div class="sub">${esc(SOURCE_TYPES[entry.source_type] || SOURCE_TYPES.unknown)} · ${esc(TASTES[entry.taste] || "미선택")} · 느낌 ${(entry.user_tags || []).length}개</div>
         </div>
       </div>`).join("")
     : `<div class="sub">선택한 이미지가 없어요.</div>`;
@@ -285,4 +263,3 @@ if ("serviceWorker" in navigator) {
 }
 
 render();
-
