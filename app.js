@@ -14,6 +14,7 @@ const TASTES = {
 };
 
 const STORE_KEY = "photo-taste-mobile-review-v1";
+const EXPORT_COUNTER_KEY = "photo-taste-mobile-export-counter-v1";
 
 const state = {
   items: loadStore(),
@@ -240,22 +241,160 @@ function buildPatch() {
   };
 }
 
-async function exportPatch() {
-  const patch = buildPatch();
-  const filename = `photo-taste-phone-patch-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
-  const file = new File([JSON.stringify(patch, null, 2)], filename, { type: "application/json" });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    await navigator.share({ files: [file], title: "Photo Taste Patch" });
-    return;
+function dateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}${month}${day}`;
+}
+
+function nextExportFilename() {
+  const today = dateKey();
+  let counter = { date: today, seq: 0 };
+  try {
+    const stored = JSON.parse(localStorage.getItem(EXPORT_COUNTER_KEY) || "{}");
+    if (stored && stored.date === today && Number.isFinite(Number(stored.seq))) {
+      counter = { date: today, seq: Number(stored.seq) };
+    }
+  } catch (_) {}
+  counter.seq += 1;
+  localStorage.setItem(EXPORT_COUNTER_KEY, JSON.stringify(counter));
+  return `photo-taste-phone-patch-${today}-${String(counter.seq).padStart(3, "0")}.zip`;
+}
+
+function crc32(bytes) {
+  let crc = -1;
+  for (const byte of bytes) {
+    crc ^= byte;
+    for (let i = 0; i < 8; i += 1) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
   }
-  const url = URL.createObjectURL(file);
+  return (crc ^ -1) >>> 0;
+}
+
+function writeUint16(target, value) {
+  target.push(value & 255, (value >>> 8) & 255);
+}
+
+function writeUint32(target, value) {
+  target.push(value & 255, (value >>> 8) & 255, (value >>> 16) & 255, (value >>> 24) & 255);
+}
+
+function dosDateTime(date = new Date()) {
+  const time = (date.getHours() << 11) | (date.getMinutes() << 5) | Math.floor(date.getSeconds() / 2);
+  const dosDate = ((date.getFullYear() - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
+  return { time, date: dosDate };
+}
+
+function createZip(files) {
+  const encoder = new TextEncoder();
+  const fileRecords = [];
+  const chunks = [];
+  let offset = 0;
+  const { time, date } = dosDateTime();
+
+  for (const file of files) {
+    const nameBytes = encoder.encode(file.name);
+    const data = encoder.encode(file.content);
+    const checksum = crc32(data);
+    const local = [];
+    writeUint32(local, 0x04034b50);
+    writeUint16(local, 20);
+    writeUint16(local, 2048);
+    writeUint16(local, 0);
+    writeUint16(local, time);
+    writeUint16(local, date);
+    writeUint32(local, checksum);
+    writeUint32(local, data.length);
+    writeUint32(local, data.length);
+    writeUint16(local, nameBytes.length);
+    writeUint16(local, 0);
+    chunks.push(new Uint8Array(local), nameBytes, data);
+    fileRecords.push({ nameBytes, checksum, size: data.length, offset });
+    offset += local.length + nameBytes.length + data.length;
+  }
+
+  const centralStart = offset;
+  for (const file of fileRecords) {
+    const central = [];
+    writeUint32(central, 0x02014b50);
+    writeUint16(central, 20);
+    writeUint16(central, 20);
+    writeUint16(central, 2048);
+    writeUint16(central, 0);
+    writeUint16(central, time);
+    writeUint16(central, date);
+    writeUint32(central, file.checksum);
+    writeUint32(central, file.size);
+    writeUint32(central, file.size);
+    writeUint16(central, file.nameBytes.length);
+    writeUint16(central, 0);
+    writeUint16(central, 0);
+    writeUint16(central, 0);
+    writeUint16(central, 0);
+    writeUint32(central, 0);
+    writeUint32(central, file.offset);
+    chunks.push(new Uint8Array(central), file.nameBytes);
+    offset += central.length + file.nameBytes.length;
+  }
+
+  const end = [];
+  writeUint32(end, 0x06054b50);
+  writeUint16(end, 0);
+  writeUint16(end, 0);
+  writeUint16(end, fileRecords.length);
+  writeUint16(end, fileRecords.length);
+  writeUint32(end, offset - centralStart);
+  writeUint32(end, centralStart);
+  writeUint16(end, 0);
+  chunks.push(new Uint8Array(end));
+  return new Blob(chunks, { type: "application/zip" });
+}
+
+function buildZipBlob(patch, filename) {
+  const manifest = {
+    app_id: patch.app_id,
+    package_type: patch.package_type,
+    schema_version: patch.schema_version,
+    created_at: patch.created_at,
+    file_name: filename,
+    item_count: patch.review_items.length
+  };
+  return createZip([
+    { name: "manifest.json", content: JSON.stringify(manifest, null, 2) },
+    { name: "phone_review_patch.json", content: JSON.stringify(patch, null, 2) },
+    { name: "review_items.json", content: JSON.stringify(patch.review_items, null, 2) }
+  ]);
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
   document.body.appendChild(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function exportPatch() {
+  if (!state.items.length) return;
+  const originalText = els.exportBtn.textContent;
+  els.exportBtn.disabled = true;
+  els.exportBtn.textContent = "생성 중";
+  try {
+    const patch = buildPatch();
+    const filename = nextExportFilename();
+    const zip = buildZipBlob(patch, filename);
+    downloadBlob(zip, filename);
+    els.exportSummary.textContent = `생성됨: ${filename}`;
+  } catch (error) {
+    console.error(error);
+    els.exportSummary.textContent = "ZIP 생성 실패";
+  } finally {
+    els.exportBtn.textContent = originalText;
+    els.exportBtn.disabled = state.items.length === 0;
+  }
 }
 
 els.chooseBtn.addEventListener("click", () => els.fileInput.click());
