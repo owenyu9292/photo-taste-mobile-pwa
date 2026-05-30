@@ -11,17 +11,29 @@
 }
 
 * { box-sizing: border-box; }
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
   font-family: "Segoe UI", system-ui, sans-serif;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .app {
   display: grid;
   gap: 12px;
   padding: 12px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .topbar { display: grid; gap: 2px; }
@@ -36,10 +48,12 @@ p, .status, label { color: var(--muted); }
   border-radius: 8px;
   background: var(--panel);
   padding: 12px;
+  min-width: 0;
 }
 
 button {
   min-height: 38px;
+  max-width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #1a202a;
@@ -69,6 +83,7 @@ button:disabled {
 
 .image-stage {
   min-height: 56vh;
+  max-width: 100%;
   border: 1px dashed #48576c;
   border-radius: 8px;
   display: grid;
@@ -90,6 +105,7 @@ button:disabled {
 .meta {
   display: grid;
   gap: 10px;
+  min-width: 0;
 }
 
 label {
@@ -101,6 +117,7 @@ label {
 
 textarea {
   width: 100%;
+  max-width: 100%;
   min-height: 68px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -146,4 +163,24 @@ textarea {
 
 .export-btn {
   min-width: 132px;
+}
+
+@media (max-width: 520px) {
+  #sourceChips button {
+    flex: 1 1 100%;
+  }
+
+  .chips button {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
+  }
+
+  .finish {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .export-btn {
+    width: 100%;
+  }
 }
