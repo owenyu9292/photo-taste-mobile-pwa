@@ -24,12 +24,7 @@ body {
   padding: 12px;
 }
 
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
+.topbar { display: grid; gap: 2px; }
 
 h1, h2, p { margin: 0; }
 h1 { font-size: 20px; }
@@ -55,10 +50,15 @@ button {
 button.primary { background: #27518f; border-color: #4077bd; }
 button.selected { border-color: var(--gold); background: #6a4c14; }
 button.good { border-color: var(--green); background: #164b32; }
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 
-.actions, .chips {
+.workbar, .chips, .finish {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 
@@ -140,3 +140,10 @@ textarea {
   word-break: keep-all;
 }
 
+.finish {
+  justify-content: space-between;
+}
+
+.export-btn {
+  min-width: 132px;
+}

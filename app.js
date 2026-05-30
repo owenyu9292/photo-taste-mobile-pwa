@@ -24,6 +24,7 @@ const els = {
   chooseBtn: document.getElementById("chooseBtn"),
   clearBtn: document.getElementById("clearBtn"),
   exportBtn: document.getElementById("exportBtn"),
+  exportSummary: document.getElementById("exportSummary"),
   fileInput: document.getElementById("fileInput"),
   status: document.getElementById("status"),
   imageStage: document.getElementById("imageStage"),
@@ -164,6 +165,8 @@ function renderChipGroup(root, values, selected, onClick, good = false) {
 function render() {
   const item = activeItem();
   els.status.textContent = `${state.items.length}장`;
+  els.exportSummary.textContent = `${state.items.length}장 패치 준비`;
+  els.exportBtn.disabled = state.items.length === 0;
   if (!item) {
     els.imageStage.classList.remove("has-image");
     els.activeImage.removeAttribute("src");

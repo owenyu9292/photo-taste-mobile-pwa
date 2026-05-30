@@ -1,9 +1,9 @@
-const CACHE_NAME = "photo-taste-mobile-v3";
+const CACHE_NAME = "photo-taste-mobile-v4";
 const BASE = new URL("./", self.location).pathname;
 const APP_SHELL = [
   "index.html",
-  "styles.css?v=3",
-  "app.js?v=3",
+  "styles.css?v=4",
+  "app.js?v=4",
   "manifest.webmanifest",
   "icon.svg"
 ].map((path) => new URL(path, self.location).toString());

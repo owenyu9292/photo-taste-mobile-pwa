@@ -6,7 +6,7 @@
   <title>Photo Taste Mobile</title>
   <meta name="theme-color" content="#0b0d10">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=3">
+  <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
   <main class="app">
@@ -15,19 +15,16 @@
         <h1>Photo Taste Mobile</h1>
         <p>오빠가 누워서 고르는 취향 패치</p>
       </div>
-      <button id="exportBtn" type="button">내보내기</button>
     </header>
 
-    <section class="panel">
-      <div class="actions">
+    <section class="viewer panel">
+      <div class="workbar">
         <button class="primary" id="chooseBtn" type="button">이미지 선택</button>
         <button id="clearBtn" type="button">비우기</button>
+        <span class="status" id="status">0장</span>
         <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
       </div>
-      <div class="status" id="status">0장</div>
-    </section>
 
-    <section class="viewer panel">
       <div class="image-stage" id="imageStage">
         <div class="empty">이미지를 선택하세요</div>
         <img id="activeImage" alt="">
@@ -49,7 +46,15 @@
       <h2>목록</h2>
       <div class="queue" id="queue"></div>
     </section>
+
+    <section class="finish panel">
+      <div>
+        <h2>마무리</h2>
+        <p class="status" id="exportSummary">0장 패치 준비</p>
+      </div>
+      <button class="primary export-btn" id="exportBtn" type="button">패치 내보내기</button>
+    </section>
   </main>
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
