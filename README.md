@@ -13,7 +13,8 @@ Ollama, 원본 사진 DB, 기준 분석 기록은 여기에 두지 않습니다.
 - 이유 태그와 직접 태그를 남긴다.
 - 메모를 남긴다.
 - `photo-taste-phone-patch-*.zip` 파일을 만들고 Google Drive로 전달한다.
-- ZIP 안의 `phone_review_patch.json`은 `user_taste`를 중심으로 하며 AI 분석 결과를 담지 않는다.
+- ZIP 안에는 `manifest.json`, `phone_review_patch.json`, `previews/*.jpg`가 들어간다.
+- ZIP 안의 `phone_review_patch.json`은 `user_taste`, `original_locator`, `preview_path`를 중심으로 하며 AI 분석 결과를 담지 않는다.
 - 노트북 메인 앱에서 이 ZIP을 가져와 로컬 기준 저장소에 병합한다.
 
 ## 데이터 원칙
@@ -23,6 +24,7 @@ Ollama, 원본 사진 DB, 기준 분석 기록은 여기에 두지 않습니다.
 - 기준 데이터베이스는 노트북 로컬 저장소다.
 - 개인 원본 사진, 분석 DB, API key, 토큰은 이 저장소에 올리지 않는다.
 - 이 앱은 분석기가 아니라 취향 패치 수집기다. `user_taste`와 `ai_analysis`를 섞지 않는다.
+- 미리보기는 긴 변 768px, JPG 품질 0.86, 원본 비율 유지, crop 금지 기준으로 만든다.
 
 ## GitHub Pages
 

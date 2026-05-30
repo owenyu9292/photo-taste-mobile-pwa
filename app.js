@@ -98,7 +98,21 @@ async function hashFile(file) {
   }
 }
 
-async function previewDataUrl(file, maxSide = 720) {
+function originalLocatorFromFile(file, sha256) {
+  return {
+    locator_version: 1,
+    storage_policy: "converged_original_library",
+    origin_hint: "phone_pwa",
+    file_name: file.name || "",
+    relative_path_hint: file.webkitRelativePath || file.name || "",
+    size: file.size || 0,
+    last_modified: file.lastModified || 0,
+    sha256: sha256 || "",
+    mime: file.type || ""
+  };
+}
+
+async function previewDataUrl(file, maxSide = 768) {
   const dataUrl = await new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("이미지를 읽을 수 없어요."));
@@ -122,15 +136,38 @@ async function previewDataUrl(file, maxSide = 720) {
   return canvas.toDataURL("image/jpeg", 0.86);
 }
 
+function padNumber(value, length = 3) {
+  return String(value).padStart(length, "0");
+}
+
+function safeZipName(value, fallback = "image") {
+  return String(value || fallback)
+    .replace(/[\\/:*?"<>|]+/g, "_")
+    .replace(/\s+/g, "_")
+    .slice(0, 96) || fallback;
+}
+
+function dataUrlToBytes(dataUrl) {
+  const text = String(dataUrl || "");
+  const comma = text.indexOf(",");
+  if (comma < 0) return new Uint8Array();
+  const binary = atob(text.slice(comma + 1));
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  return bytes;
+}
+
 async function addFiles(files) {
   for (const file of [...files].filter((item) => /^image\/(png|jpe?g|webp)$/i.test(item.type))) {
     const id = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    const sha256 = await hashFile(file);
     const item = {
       id,
       image_name: file.name,
-      image_hash: await hashFile(file),
+      image_hash: sha256,
       size: file.size || 0,
       last_modified: file.lastModified || 0,
+      original_locator: originalLocatorFromFile(file, sha256),
       preview: await previewDataUrl(file),
       source_type: "unknown",
       taste: "",
@@ -221,20 +258,15 @@ function render() {
 
 function buildPatch() {
   setActiveFields(activeItem());
-  return {
-    app_id: "photo-taste-app",
-    package_type: "phone_review_patch",
-    schema_version: 2,
-    created_at: new Date().toISOString(),
-    role: "phone_taste_patch",
-    contains_ai_analysis: false,
-    data_layers: {
-      user_taste: true,
-      ai_analysis: false,
-      original_locator: false,
-      preview: false
-    },
-    review_items: state.items.map((item) => {
+  const previewEntries = [];
+  const reviewItems = state.items.map((item, index) => {
+      const previewPath = item.preview ? `previews/${padNumber(index + 1)}-${safeZipName(item.image_hash || item.id)}.jpg` : "";
+      if (previewPath) {
+        previewEntries.push({
+          name: previewPath,
+          content: dataUrlToBytes(item.preview)
+        });
+      }
       const sourceType = item.source_type || "unknown";
       const userTaste = {
         source_type: sourceType,
@@ -255,9 +287,48 @@ function buildPatch() {
         user_tags: userTaste.user_tags,
         note: userTaste.note,
         user_taste: userTaste,
+        original_locator: item.original_locator || {
+          locator_version: 1,
+          storage_policy: "converged_original_library",
+          origin_hint: "phone_pwa",
+          file_name: item.image_name,
+          relative_path_hint: item.image_name,
+          size: item.size || 0,
+          last_modified: item.last_modified || 0,
+          sha256: item.image_hash || "",
+          mime: ""
+        },
+        preview_path: previewPath,
+        preview_mime: previewPath ? "image/jpeg" : "",
+        preview_max_side: previewPath ? 768 : 0,
+        preview_role: previewPath ? "taste_review_preview" : "",
         reviewed_at: userTaste.reviewed_at
       };
-    })
+    });
+  return {
+    patch: {
+      app_id: "photo-taste-app",
+      package_type: "phone_review_patch",
+      schema_version: 3,
+      created_at: new Date().toISOString(),
+      role: "phone_taste_patch",
+      contains_ai_analysis: false,
+      data_layers: {
+        user_taste: true,
+        ai_analysis: false,
+        original_locator: true,
+        preview: true
+      },
+      preview_policy: {
+        max_side: 768,
+        format: "image/jpeg",
+        quality: 0.86,
+        fit: "contain",
+        crop: false
+      },
+      review_items: reviewItems
+    },
+    previewEntries
   };
 }
 
@@ -314,7 +385,7 @@ function createZip(files) {
 
   for (const file of files) {
     const nameBytes = encoder.encode(file.name);
-    const data = encoder.encode(file.content);
+    const data = file.content instanceof Uint8Array ? file.content : encoder.encode(file.content);
     const checksum = crc32(data);
     const local = [];
     writeUint32(local, 0x04034b50);
@@ -370,19 +441,22 @@ function createZip(files) {
   return new Blob(chunks, { type: "application/zip" });
 }
 
-function buildZipBlob(patch, filename) {
+function buildZipBlob(patch, previewEntries, filename) {
   const manifest = {
     app_id: patch.app_id,
     package_type: patch.package_type,
     schema_version: patch.schema_version,
     created_at: patch.created_at,
     file_name: filename,
-    item_count: patch.review_items.length
+    item_count: patch.review_items.length,
+    json: "phone_review_patch.json",
+    previews_dir: "previews",
+    preview_count: previewEntries.length
   };
   return createZip([
     { name: "manifest.json", content: JSON.stringify(manifest, null, 2) },
     { name: "phone_review_patch.json", content: JSON.stringify(patch, null, 2) },
-    { name: "review_items.json", content: JSON.stringify(patch.review_items, null, 2) }
+    ...previewEntries
   ]);
 }
 
@@ -403,9 +477,9 @@ async function exportPatch() {
   els.exportBtn.disabled = true;
   els.exportBtn.textContent = "생성 중";
   try {
-    const patch = buildPatch();
+    const { patch, previewEntries } = buildPatch();
     const filename = nextExportFilename();
-    const zip = buildZipBlob(patch, filename);
+    const zip = buildZipBlob(patch, previewEntries, filename);
     downloadBlob(zip, filename);
     els.exportSummary.textContent = `생성됨: ${filename}`;
   } catch (error) {
