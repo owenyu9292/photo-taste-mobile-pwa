@@ -224,20 +224,40 @@ function buildPatch() {
   return {
     app_id: "photo-taste-app",
     package_type: "phone_review_patch",
-    schema_version: 1,
+    schema_version: 2,
     created_at: new Date().toISOString(),
-    role: "phone_review",
-    review_items: state.items.map((item) => ({
-      image_name: item.image_name,
-      image_hash: item.image_hash,
-      source_type: item.source_type || "unknown",
-      source_label: SOURCE_TYPES[item.source_type] || SOURCE_TYPES.unknown,
-      taste: item.taste || "",
-      reason_tags: item.reason_tags || [],
-      user_tags: item.user_tags || [],
-      note: item.note || "",
-      reviewed_at: item.reviewed_at
-    }))
+    role: "phone_taste_patch",
+    contains_ai_analysis: false,
+    data_layers: {
+      user_taste: true,
+      ai_analysis: false,
+      original_locator: false,
+      preview: false
+    },
+    review_items: state.items.map((item) => {
+      const sourceType = item.source_type || "unknown";
+      const userTaste = {
+        source_type: sourceType,
+        source_label: SOURCE_TYPES[sourceType] || SOURCE_TYPES.unknown,
+        taste: item.taste || "",
+        reason_tags: item.reason_tags || [],
+        user_tags: item.user_tags || [],
+        note: item.note || "",
+        reviewed_at: item.reviewed_at
+      };
+      return {
+        image_name: item.image_name,
+        image_hash: item.image_hash,
+        source_type: userTaste.source_type,
+        source_label: userTaste.source_label,
+        taste: userTaste.taste,
+        reason_tags: userTaste.reason_tags,
+        user_tags: userTaste.user_tags,
+        note: userTaste.note,
+        user_taste: userTaste,
+        reviewed_at: userTaste.reviewed_at
+      };
+    })
   };
 }
 
