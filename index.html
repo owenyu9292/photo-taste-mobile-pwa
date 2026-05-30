@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Photo Taste Mobile</title>
+  <meta name="theme-color" content="#0b0d10">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>Photo Taste Mobile</h1>
+        <p>오빠가 누워서 고르는 취향 패치</p>
+      </div>
+      <button id="exportBtn" type="button">내보내기</button>
+    </header>
+
+    <section class="panel">
+      <div class="actions">
+        <button class="primary" id="chooseBtn" type="button">이미지 선택</button>
+        <button id="clearBtn" type="button">비우기</button>
+        <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
+      </div>
+      <div class="status" id="status">0장</div>
+    </section>
+
+    <section class="viewer panel">
+      <div class="image-stage" id="imageStage">
+        <div class="empty">이미지를 선택하세요</div>
+        <img id="activeImage" alt="">
+      </div>
+      <div class="meta">
+        <h2 id="activeTitle">선택 없음</h2>
+        <div class="chips" id="sourceChips"></div>
+        <div class="chips" id="tasteChips"></div>
+        <div class="chips" id="reasonChips"></div>
+        <label>태그
+          <textarea id="tagInput" placeholder="예: 하늘, 역광, 뒷모습, 로우앵글"></textarea>
+        </label>
+        <label>메모
+          <textarea id="noteInput" placeholder="왜 다시 보고 싶은지 짧게 적어요"></textarea>
+        </label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>목록</h2>
+      <div class="queue" id="queue"></div>
+    </section>
+  </main>
+  <script src="app.js?v=1"></script>
+</body>
+</html>
+

@@ -1,0 +1,13 @@
+# Local runtime files
+*.log
+*.tmp
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Do not commit personal export batches here
+photo-taste-phone-patch-*.json
+photo-taste-drive-bundle-*.json
+

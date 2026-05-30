@@ -1,0 +1,142 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0d10;
+  --panel: #151920;
+  --line: #2a3340;
+  --text: #eef3f8;
+  --muted: #98a5b3;
+  --blue: #69a7ff;
+  --gold: #f2bf4a;
+  --green: #58d99a;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.app {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+h1, h2, p { margin: 0; }
+h1 { font-size: 20px; }
+h2 { font-size: 15px; }
+p, .status, label { color: var(--muted); }
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 12px;
+}
+
+button {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #1a202a;
+  color: var(--text);
+  padding: 0 12px;
+}
+
+button.primary { background: #27518f; border-color: #4077bd; }
+button.selected { border-color: var(--gold); background: #6a4c14; }
+button.good { border-color: var(--green); background: #164b32; }
+
+.actions, .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.viewer {
+  display: grid;
+  gap: 12px;
+}
+
+.image-stage {
+  min-height: 56vh;
+  border: 1px dashed #48576c;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #10141a;
+}
+
+.image-stage img {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  display: none;
+}
+
+.image-stage.has-image img { display: block; }
+.image-stage.has-image .empty { display: none; }
+
+.meta {
+  display: grid;
+  gap: 10px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+textarea {
+  width: 100%;
+  min-height: 68px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0e1218;
+  color: var(--text);
+  padding: 9px 10px;
+  font: inherit;
+}
+
+.queue {
+  display: grid;
+  gap: 8px;
+}
+
+.queue-item {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #10141a;
+  padding: 8px;
+}
+
+.queue-item.active { border-color: var(--blue); }
+.thumb {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #080b0f;
+}
+
+.sub {
+  color: var(--muted);
+  font-size: 12px;
+  word-break: keep-all;
+}
+
